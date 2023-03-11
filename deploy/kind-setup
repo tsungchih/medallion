@@ -1,0 +1,39 @@
+#!/bin/bash
+
+MEDALLION_AIR_VERSION=0.1.0
+MEDALLION_WEATHER_VERSION=0.1.0
+CHART_VERSION=1.1.2
+
+kind create cluster --name=dev
+
+kind load docker-image --name=dev georgelai/medallion-air:${MEDALLION_AIR_VERSION}
+kind load docker-image --name=dev georgelai/medallion-weather:${MEDALLION_WEATHER_VERSION}
+
+kubectl create ns dagster
+kubectl --namespace=dagster apply -f cm-dagster-workspace.yaml
+kubectl --namespace=dagster create secret generic medallion-air-secret-envs \
+	--from-literal=GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} \
+	--from-literal=GOOGLE_APPLICATION_CREDENTIALS=/root/application_default_credentials.json
+kubectl --namespace=dagster create secret generic medallion-air-gcp-creds \
+	--from-file=adc=${GOOGLE_APPLICATION_CREDENTIALS}
+kubectl --namespace=dagster create secret generic medallion-weather-secret-envs \
+	--from-literal=GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} \
+	--from-literal=GOOGLE_APPLICATION_CREDENTIALS=/root/application_default_credentials.json
+kubectl --namespace=dagster create secret generic medallion-weather-gcp-creds \
+	--from-file=adc=${GOOGLE_APPLICATION_CREDENTIALS}
+
+helm upgrade \
+  --namespace=dagster \
+  --install \
+  dagster \
+  dagster/dagster \
+  --version=${CHART_VERSION} \
+  --values=dagster-values.yaml
+
+helm upgrade \
+  --namespace=dagster \
+  --install \
+  dagster-user-deployments \
+  dagster/dagster-user-deployments \
+  --version=${CHART_VERSION} \
+  --values=dagster-user-deployments-values.yaml
