@@ -1,12 +1,8 @@
 from dagster import AssetSelection, JobDefinition, define_asset_job
 
-from medallion_air.assets import (
-    bronze_layer_assets,
-    gold_layer_assets,
-    silver_layer_assets,
-)
 from medallion_air.assets.partitions import hourly_partitions_def
 from medallion_air.jobs import JOB_RETRY_TAGS
+from medallion_air.resources.configs import partitioned_all_air_assets_job_config
 
 _dagster_k8s_tags = {
     "dagster-k8s/config": {
@@ -40,4 +36,5 @@ all_air_assets_partitioned_job: JobDefinition = define_asset_job(
     description="This job materializes all the asstes.",
     partitions_def=hourly_partitions_def,
     tags={**_dagster_k8s_tags, **_job_tags, **JOB_RETRY_TAGS},
+    config=partitioned_all_air_assets_job_config,
 )
