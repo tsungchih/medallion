@@ -1,0 +1,7 @@
+.venv
+.artifact
+.coverage*
+.logs_queue
+.pytest_cache
+.telemetry
+logs

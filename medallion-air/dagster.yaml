@@ -1,0 +1,42 @@
+local_artifact_storage:
+  module: dagster.core.storage.root
+  class: LocalArtifactStorage
+  config:
+    base_dir: #/Users/tsungchih/Documents/projects/github/dagster-demo/aqi
+      env: LOCAL_ARTIFACT_STORAGE_BASE_DIR
+run_storage:
+  module: dagster.core.storage.runs
+  class: SqliteRunStorage
+  config:
+    base_dir: #/Users/tsungchih/Documents/projects/github/dagster-demo/aqi/history/
+      env: SQLITE_RUN_STORAGE_BASE_DIR
+event_log_storage:
+  module: dagster.core.storage.event_log
+  class: SqliteEventLogStorage
+  config:
+    base_dir: #/Users/tsungchih/Documents/projects/github/dagster-demo/aqi/history/runs/
+      env: SQLITE_EVENT_LOG_STORAGE_BASE_DIR
+compute_logs:
+  module: dagster.core.storage.local_compute_log_manager
+  class: LocalComputeLogManager
+  config:
+    base_dir: #/Users/tsungchih/Documents/projects/github/dagster-demo/aqi/storage
+      env: LOCAL_COMPUTE_LOG_MANAGER_BASE_DIR
+schedule_storage:
+  module: dagster.core.storage.schedules
+  class: SqliteScheduleStorage
+  config:
+    base_dir: #/Users/tsungchih/Documents/projects/github/dagster-demo/aqi/schedules
+      env: SQLITE_SCHEDULE_STORAGE_BASE_DIR
+scheduler:
+  module: dagster.core.scheduler
+  class: DagsterDaemonScheduler
+  config: {}
+run_coordinator:
+  module: dagster.core.run_coordinator
+  class: DefaultRunCoordinator
+  config: {}
+run_launcher:
+  module: dagster
+  class: DefaultRunLauncher
+  config: {}

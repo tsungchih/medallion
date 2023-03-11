@@ -1,0 +1,171 @@
+####################################################################################################
+# Dagit: Configuration for the Dagit webserver
+####################################################################################################
+dagit:
+  replicaCount: 1
+  image:
+    repository: "docker.io/dagster/dagster-celery-k8s"
+    tag: "1.1.2"
+    pullPolicy: "IfNotPresent"
+  workspace:
+    enabled: true
+    servers: []
+    externalConfigmap: "dagster-workspace"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "100m"
+      memory: "128Mi"
+
+####################################################################################################
+# User Code Deployments: Configuration for user code containers to be loaded via GRPC server. For
+# each item in the "deployments" list, a K8s Deployment and K8s Service will be created to run the
+# GRPC server that Dagit/Dagster communicates with to get repository information and the current
+# image information. These deployments can be updated independently of Dagit, and Dagit/Dagster
+# will pull the current image for all execution. When using a distributed executor (such as
+# Celery-K8s) for pipeline run, the current image will be queried once and used for all
+# solid executions for that pipeline run. In order to guarantee that all solid executions within a
+# pipeline execution use the same image, we recommend using a unique tag (ie not "latest").
+#
+# All user code will be invoked within the images.
+####################################################################################################
+dagster-user-deployments:
+  enabled: true
+  enableSubchart: false
+
+####################################################################################################
+# Pipeline Run: Configuration for user code containers.
+#
+# `DAGSTER_K8S_PIPELINE_RUN_IMAGE` environment variable will point to the image specified below.
+# The run config for the celery executor can set `job_image` to fetch from environment variable
+# `DAGSTER_K8S_PIPELINE_RUN_IMAGE`, so that celery workers will launch k8s jobs with said image.
+#
+####################################################################################################
+pipelineRun:
+  image:
+    # When a tag is not supplied for a Dagster provided image,
+    # it will default as the Helm chart version.
+    repository: "docker.io/dagster/user-code-example"
+    tag: "1.1.2"
+    pullPolicy: "IfNotPresent"
+
+####################################################################################################
+# Run Launcher: Configuration for run launcher
+####################################################################################################
+runLauncher:
+  # Type can be one of [K8sRunLauncher, CeleryK8sRunLauncher, CustomRunLauncher]
+  type: K8sRunLauncher
+
+  config:
+    # This configuration will only be used if the K8sRunLauncher is selected
+    k8sRunLauncher:
+      # Change with caution! If you're using a fixed tag for pipeline run images, changing the
+      # image pull policy to anything other than "Always" will use a cached/stale image, which is
+      # almost certainly not what you want.
+      imagePullPolicy: "Always"
+
+      ## The image to use for the launched Job's Dagster container.
+      ## The `pullPolicy` field is ignored. Use`imagePullPolicy` instead.
+      # image:
+      #   repository: ""
+      #   tag: ""
+      #   pullPolicy: Always
+
+      # The K8s namespace where new jobs will be launched.
+      # By default, the release namespace is used.
+      jobNamespace: ~
+
+      resources:
+        limits:
+          cpu: 100m
+          memory: 128Mi
+        requests:
+          cpu: 100m
+          memory: 128Mi
+
+    ## Uncomment this configuration will only be used if the CustomRunLauncher is selected.
+    ## Using this setting requires a custom Dagit image that defines the user specified
+    ## run launcher in an installed python module.
+    # customRunLauncher:
+    #   module: ~
+    #   class: ~
+    #   config: {}
+
+####################################################################################################
+# PostgreSQL: Configuration values for postgresql
+#
+# https://github.com/kubernetes/charts/blob/master/stable/postgresql/README.md
+#
+# A PostgreSQL database is required to run Dagster on Kubernetes. If postgresql.enabled is marked as
+# false, the PG credentials specified here will still be used, and should point to an external PG
+# database that is accessible from this chart.
+####################################################################################################
+postgresql:
+  # set postgresql.enabled to be false to disable deploy of a PostgreSQL database and use an
+  # existing external PostgreSQL database
+  enabled: true
+
+  # Used by init container to check that db is running. (Even if enabled:false)
+  image:
+    repository: "postgres"
+    tag: "12.12"
+    pullPolicy: "IfNotPresent"
+
+  # set this PostgreSQL hostname when using an external PostgreSQL database
+  postgresqlHost: ""
+
+  postgresqlUsername: dagster
+
+  # Note when changing this password (e.g. in test) that credentials will
+  # persist as long as the PVCs do -- see:
+  # https://github.com/helm/charts/issues/12836#issuecomment-524552358
+  postgresqlPassword: dagster
+
+  postgresqlDatabase: dagster
+
+####################################################################################################
+# Dagster Daemon (Optional) Deploy a daemon for launching queued runs and running schedules and
+# sensors.
+#
+# By default, this daemon is included in your deployment and used to run schedules and sensors.
+# Setting `enabled` to false will stop the daemon from being included in your deployment.
+#
+# Each thread in the daemon periodically sends heartbeats to indicate that it is still running.
+# Setting `heartbeatTolerance` lets you configure how long each thread can run without sending
+# a heartbeat before the daemon determines that one must be hanging and restarts the process.
+#
+# Setting `config.queuedRunCoordinator.maxConcurrentRuns` in `runCoordinator` allows you to set
+# limits on the total number of runs that can execute at once.
+####################################################################################################
+dagsterDaemon:
+  enabled: true
+
+  image:
+    # When a tag is not supplied for a Dagster provided image,
+    # it will default as the Helm chart version.
+    repository: "docker.io/dagster/dagster-celery-k8s"
+    tag: "1.1.2"
+    pullPolicy: "IfNotPresent"
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "500m"
+      memory: "500Mi"
+
+
+####################################################################################################
+# As an open source project, we collect usage statistics to better understand how users engage
+# with Dagster and to inform development priorities.
+#
+# Telemetry data will motivate projects such as adding functionality in frequently-used parts of
+# the product and will help us understand adoption of new features.
+#
+# For more details, see:
+# https://docs.dagster.io/getting-started/telemetry
+####################################################################################################
+telemetry:
+  enabled: false
