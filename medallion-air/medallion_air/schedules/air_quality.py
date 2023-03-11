@@ -15,6 +15,7 @@ partitioned_all_assets_schedule = build_schedule_from_partitioned_job(
     job=all_air_assets_partitioned_job,
     name="hourly_partitioned_all_assets_schedule",
     description="The schedule for partitioned asset job.",
+    default_status=DefaultScheduleStatus.RUNNING,
 )
 
 
@@ -28,21 +29,9 @@ def hourly_all_assets_schedule(_context: ScheduleEvaluationContext):
     scheduled_date = _context.scheduled_execution_time.strftime("%Y-%m-%d")
     run_config = {
         "ops": {
-            "bronze_aqi_asset": {
-                "config": {
-                    "api_uri": "https://data.epa.gov.tw/api/v2/aqx_p_432?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json"
-                }
-            },
-            "bronze_pm10_asset": {
-                "config": {
-                    "api_uri": "https://data.epa.gov.tw/api/v2/aqx_p_319?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json"
-                }
-            },
-            "bronze_pm25_asset": {
-                "config": {
-                    "api_uri": "https://data.epa.gov.tw/api/v2/aqx_p_02?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json"
-                }
-            },
+            "bronze_aqi_asset": {"config": {"api_uri": {"env": "MEDALLION_AIR_AQI_URI"}}},
+            "bronze_pm10_asset": {"config": {"api_uri": {"env": "MEDALLION_AIR_PM10_URI"}}},
+            "bronze_pm25_asset": {"config": {"api_uri": {"env": "MEDALLION_AIR_PM25_URI"}}},
         }
     }
     return RunRequest(run_config=run_config, tags={"scheduled_date": scheduled_date})

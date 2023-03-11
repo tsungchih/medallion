@@ -1,4 +1,13 @@
-from dagster import DagsterRunStatus, Field, IntSource, Noneable, StringSource
+from datetime import datetime
+
+from dagster import (
+    DagsterRunStatus,
+    Field,
+    IntSource,
+    Noneable,
+    StringSource,
+    hourly_partitioned_config,
+)
 
 
 def job_retention_resource_config_schema():
@@ -29,3 +38,14 @@ def define_job_clean_config_schema():
         **job_retention_resource_config_schema(),
     }
     return config_schema
+
+
+@hourly_partitioned_config(start_date=datetime(2023, 3, 1), timezone="Asia/Taipei")
+def partitioned_all_air_assets_job_config(start: datetime, _end: datetime):
+    return {
+        "ops": {
+            "bronze_aqi_asset": {"config": {"api_uri": {"env": "MEDALLION_AIR_AQI_URI"}}},
+            "bronze_pm10_asset": {"config": {"api_uri": {"env": "MEDALLION_AIR_PM10_URI"}}},
+            "bronze_pm25_asset": {"config": {"api_uri": {"env": "MEDALLION_AIR_PM25_URI"}}},
+        }
+    }
