@@ -1,20 +1,8 @@
-####################################################################################################
-# User Code Deployments: Configuration for user code containers to be loaded via GRPC server. For
-# each item in the "deployments" list, a K8s Deployment and K8s Service will be created to run the
-# GRPC server that Dagit/Dagster communicates with to get repository information and the current
-# image information. These deployments can be updated independently of Dagit, and Dagit/Dagster
-# will pull the current image for all execution. When using a distributed executor (such as
-# Celery-K8s) for pipeline run, the current image will be queried once and used for all
-# solid executions for that pipeline run. In order to guarantee that all solid executions within a
-# pipeline execution use the same image, we recommend using a unique tag (ie not "latest").
-#
-# All user code will be invoked within the images.
-####################################################################################################
 deployments:
   - name: "medallion-weather"
     image:
       repository: "georgelai/medallion-weather"
-      tag: "0.1.0"
+      tag: "0.1.2"
       pullPolicy: "IfNotPresent"
     dagsterApiGrpcArgs:
       - "-m"
@@ -22,7 +10,7 @@ deployments:
     port: 4266
     resources:
       requests:
-        cpu: "500m"
+        cpu: "250m"
         memory: "500Mi"
       limits:
         cpu: "500m"
@@ -48,7 +36,7 @@ deployments:
   - name: "medallion-air"
     image:
       repository: "georgelai/medallion-air"
-      tag: "0.1.0"
+      tag: "0.1.2"
       pullPolicy: "IfNotPresent"
     dagsterApiGrpcArgs:
       - "-m"
@@ -56,7 +44,7 @@ deployments:
     port: 4266
     resources:
       requests:
-        cpu: "500m"
+        cpu: "250m"
         memory: "500Mi"
       limits:
         cpu: "500m"
@@ -73,10 +61,14 @@ deployments:
       - name: "gcp-creds-vol"
         mountPath: "/root"
     env:
-      MEDALLION_AIR_ENV: dev
-      MEDALLION_AIR_PM25_URI: https://data.epa.gov.tw/api/v2/aqx_p_02?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json
-      MEDALLION_AIR_PM10_URI: https://data.epa.gov.tw/api/v2/aqx_p_319?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json
-      MEDALLION_AIR_AQI_URI: https://data.epa.gov.tw/api/v2/aqx_p_432?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json
+      MEDALLION_AIR_ENV: "dev"
+      MEDALLION_AIR_PM25_URI: "https://data.epa.gov.tw/api/v2/aqx_p_02?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json"
+      MEDALLION_AIR_PM10_URI: "https://data.epa.gov.tw/api/v2/aqx_p_319?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json"
+      MEDALLION_AIR_AQI_URI: "https://data.epa.gov.tw/api/v2/aqx_p_432?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json"
+      MEDALLION_AIR_PURGE_CANCELED_JOBS_AFTER_DAYS: "-1"
+      MEDALLION_AIR_PURGE_FAILURE_JOBS_AFTER_DAYS: "1"
+      MEDALLION_AIR_PURGE_SUCCESS_JOBS_AFTER_DAYS: "1"
+      DASK_ADDRESS: "tcp://dask-scheduler:8786"
 
     envSecrets:
       - name: "medallion-air-secret-envs"

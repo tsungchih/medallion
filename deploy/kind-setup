@@ -1,8 +1,13 @@
 #!/bin/bash
 
-MEDALLION_AIR_VERSION=0.1.0
-MEDALLION_WEATHER_VERSION=0.1.0
-CHART_VERSION=1.1.2
+MEDALLION_AIR_VERSION=0.1.2
+MEDALLION_WEATHER_VERSION=0.1.2
+DAGSTER_CHART_VERSION=1.2.1
+DASK_CHART_VERSION=2023.1.0
+
+kind delete clusters --all
+
+helm repo update
 
 kind create cluster --name=dev
 
@@ -22,18 +27,23 @@ kubectl --namespace=dagster create secret generic medallion-weather-secret-envs 
 kubectl --namespace=dagster create secret generic medallion-weather-gcp-creds \
 	--from-file=adc=${GOOGLE_APPLICATION_CREDENTIALS}
 
-helm upgrade \
-  --namespace=dagster \
-  --install \
+#helm --namespace=dagster upgrade \
+#  dask \
+#  dask/dask \
+#  --install \
+#  --version=${DASK_CHART_VERSION} \
+#  --values=dask-values.yaml
+
+helm --namespace=dagster upgrade \
   dagster \
   dagster/dagster \
+  --install \
   --version=${CHART_VERSION} \
   --values=dagster-values.yaml
 
-helm upgrade \
-  --namespace=dagster \
-  --install \
+helm --namespace=dagster upgrade \
   dagster-user-deployments \
   dagster/dagster-user-deployments \
+  --install \
   --version=${CHART_VERSION} \
   --values=dagster-user-deployments-values.yaml

@@ -1,4 +1,10 @@
-from dagster import AssetSelection, JobDefinition, define_asset_job
+from dagster import (
+    AssetSelection,
+    JobDefinition,
+    define_asset_job,
+    multi_or_in_process_executor,
+)
+from dagster_dask import dask_executor
 
 from medallion_air.assets.partitions import hourly_partitions_def
 from medallion_air.jobs import JOB_RETRY_TAGS
@@ -34,6 +40,7 @@ all_air_assets_partitioned_job: JobDefinition = define_asset_job(
     name="all_air_assets_partitioned_job",
     selection=_all_assets,
     description="This job materializes all the asstes.",
+    executor_def=multi_or_in_process_executor,
     partitions_def=hourly_partitions_def,
     tags={**_dagster_k8s_tags, **_job_tags, **JOB_RETRY_TAGS},
     config=partitioned_all_air_assets_job_config,
