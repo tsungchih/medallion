@@ -38,11 +38,11 @@ def hourly_all_assets_schedule(_context: ScheduleEvaluationContext):
 
 
 @schedule(
-    cron_schedule="0/3 * * * *",
+    cron_schedule="0/30 * * * *",
     job=job_clean,
     tags=schedule_tags,
     execution_timezone="Asia/Taipei",
-    default_status=DefaultScheduleStatus.RUNNING,
+    default_status=DefaultScheduleStatus.STOPPED,
 )
 def hourly_job_clean_schedule(_context: ScheduleEvaluationContext):
     """This schedule execute `job_clean` every hour.

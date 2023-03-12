@@ -5,7 +5,7 @@ dagit:
   replicaCount: 1
   image:
     repository: "docker.io/dagster/dagster-celery-k8s"
-    tag: "1.1.2"
+    tag: "1.2.1"
     pullPolicy: "IfNotPresent"
   workspace:
     enabled: true
@@ -16,8 +16,8 @@ dagit:
       cpu: "100m"
       memory: "128Mi"
     limits:
-      cpu: "100m"
-      memory: "128Mi"
+      cpu: "750m"
+      memory: "1Gi"
 
 ####################################################################################################
 # User Code Deployments: Configuration for user code containers to be loaded via GRPC server. For
@@ -48,7 +48,7 @@ pipelineRun:
     # When a tag is not supplied for a Dagster provided image,
     # it will default as the Helm chart version.
     repository: "docker.io/dagster/user-code-example"
-    tag: "1.1.2"
+    tag: "1.2.1"
     pullPolicy: "IfNotPresent"
 
 ####################################################################################################
@@ -64,7 +64,7 @@ runLauncher:
       # Change with caution! If you're using a fixed tag for pipeline run images, changing the
       # image pull policy to anything other than "Always" will use a cached/stale image, which is
       # almost certainly not what you want.
-      imagePullPolicy: "Always"
+      imagePullPolicy: "IfNotPresent"
 
       ## The image to use for the launched Job's Dagster container.
       ## The `pullPolicy` field is ignored. Use`imagePullPolicy` instead.
@@ -82,16 +82,8 @@ runLauncher:
           cpu: 100m
           memory: 128Mi
         requests:
-          cpu: 100m
-          memory: 128Mi
-
-    ## Uncomment this configuration will only be used if the CustomRunLauncher is selected.
-    ## Using this setting requires a custom Dagit image that defines the user specified
-    ## run launcher in an installed python module.
-    # customRunLauncher:
-    #   module: ~
-    #   class: ~
-    #   config: {}
+          cpu: 250m
+          memory: 512Mi
 
 ####################################################################################################
 # PostgreSQL: Configuration values for postgresql
@@ -146,16 +138,44 @@ dagsterDaemon:
     # When a tag is not supplied for a Dagster provided image,
     # it will default as the Helm chart version.
     repository: "docker.io/dagster/dagster-celery-k8s"
-    tag: "1.1.2"
+    tag: "1.2.1"
     pullPolicy: "IfNotPresent"
   resources:
     requests:
-      cpu: "500m"
+      cpu: "250m"
       memory: "500Mi"
     limits:
-      cpu: "500m"
+      cpu: "250m"
       memory: "500Mi"
 
+  runCoordinator:
+    enabled: true
+    type: QueuedRunCoordinator
+    config:
+      queuedRunCoordinator:
+        maxConcurrentRuns: ~
+        tagConcurrencyLimits: []
+        dequeueIntervalSeconds: ~
+        dequeueUseThreads: true
+        dequeueNumWorkers: 4
+
+  runMonitoring:
+    enabled: true
+    startTimeoutSeconds: 300
+    pollIntervalSeconds: 120
+    maxResumeRunAttempts: 1
+
+  runRetries:
+    enabled: true
+    maxRetries: 0
+
+  sensors:
+    useThreads: true
+    numWorkers: 4
+
+  schedules:
+    useThreads: true
+    numWorkers: 4
 
 ####################################################################################################
 # As an open source project, we collect usage statistics to better understand how users engage
@@ -169,3 +189,14 @@ dagsterDaemon:
 ####################################################################################################
 telemetry:
   enabled: false
+
+retention:
+  enabled: true
+  schedule:
+    purgeAfterDays: 1
+  sensor:
+    purgeAfterDays:
+      failure: -1
+      skipped: 3
+      started: 3
+      success: 3

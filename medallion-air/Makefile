@@ -74,6 +74,7 @@ docker-build: cmd-exists-docker
 		--build-arg PROJECT_NAME=$(PROJ_NAME) \
 		--tag georgelai/$(PROJ_NAME):$(PROJ_VERSION) \
 		--file docker/Dockerfile \
+		.
 
 ## Start a local deployment of Dagster, including Dagit and the dagster-daemon
 run-dagster-dev:cmd-exists-dagster
