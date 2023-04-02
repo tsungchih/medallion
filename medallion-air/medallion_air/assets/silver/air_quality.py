@@ -1,3 +1,6 @@
+import asyncio
+import time
+
 import numpy as np
 import pandas as pd
 from dagster import (
@@ -103,48 +106,8 @@ def silver_pm10_asset(_context: OpExecutionContext, bronze_pm10_asset) -> Output
 )
 def silver_aqi_multi_asset(_context: OpExecutionContext, bronze_aqi_asset):
     """This asset produces multiple assets from bronze_aqi_asset."""
-    aqi_table_cols = ["sitename", "county", "aqi", "publishtime"]
-    wind_table_cols = ["sitename", "county", "wind_speed", "wind_direc", "publishtime"]
-    air_table_cols = [
-        "sitename",
-        "county",
-        "o3",
-        "co",
-        "so2",
-        "no",
-        "no2",
-        "nox",
-        "pollutant",
-        "publishtime",
-    ]
-    air_avg_table_cols = [
-        "sitename",
-        "county",
-        "o3_8hr",
-        "co_8hr",
-        "pm25_avg",
-        "pm10_avg",
-        "so2_avg",
-        "publishtime",
-    ]
-
-    df: pd.DataFrame = bronze_aqi_asset[wind_table_cols]
-    wind_df = df.rename(
-        columns={"sitename": "site", "wind_direc": "wind_dir", "publishtime": "event_time"}
-    )
-    wind_df.dropna(inplace=True)
-
-    df = bronze_aqi_asset[aqi_table_cols]
-    aqi_df = df.rename(columns={"sitename": "site", "publishtime": "event_time"})
-    aqi_df["aqi"] = aqi_df["aqi"].replace(to_replace="", value=np.nan)
-
-    df = bronze_aqi_asset[air_table_cols]
-    air_df = df.rename(columns={"sitename": "site", "publishtime": "event_time"})
-    air_df.dropna(inplace=True)
-
-    df = bronze_aqi_asset[air_avg_table_cols]
-    air_avg_df = df.rename(columns={"sitename": "site", "publishtime": "event_time"})
-    air_avg_df.dropna(inplace=True)
+    dfs = asyncio.run(coro_get_dfs(bronze_aqi_asset))
+    wind_df, aqi_df, air_df, air_avg_df = dfs
 
     yield Output(
         value=wind_df,
@@ -166,3 +129,89 @@ def silver_aqi_multi_asset(_context: OpExecutionContext, bronze_aqi_asset):
         output_name="silver_air_avg_asset",
         metadata={"row_count": air_avg_df.shape[0], "col_count": air_avg_df.shape[1]},
     )
+
+
+async def coro_get_dfs(base_df: pd.DataFrame):
+    task_get_wind_df = coro_get_wind_df(base_df)
+    task_get_aqi_df = coro_get_aqi_df(base_df)
+    task_get_air_df = coro_get_air_df(base_df)
+    task_get_air_avg_df = coro_get_air_avg_df(base_df)
+    dfs = await asyncio.gather(
+        task_get_wind_df, task_get_aqi_df, task_get_air_df, task_get_air_avg_df
+    )
+    return dfs
+
+
+async def coro_get_wind_df(base_df: pd.DataFrame) -> pd.DataFrame:
+    df = await asyncio.to_thread(get_wind_df, base_df)
+    return df
+
+
+async def coro_get_aqi_df(base_df: pd.DataFrame) -> pd.DataFrame:
+    df = await asyncio.to_thread(get_aqi_df, base_df)
+    return df
+
+
+async def coro_get_air_df(base_df: pd.DataFrame) -> pd.DataFrame:
+    df = await asyncio.to_thread(get_air_df, base_df)
+    return df
+
+
+async def coro_get_air_avg_df(base_df: pd.DataFrame) -> pd.DataFrame:
+    df = await asyncio.to_thread(get_air_avg_df, base_df)
+    return df
+
+
+def get_wind_df(base_df: pd.DataFrame) -> pd.DataFrame:
+    wind_table_cols = ["sitename", "county", "wind_speed", "wind_direc", "publishtime"]
+    df: pd.DataFrame = base_df[wind_table_cols]
+    wind_df = df.rename(
+        columns={"sitename": "site", "wind_direc": "wind_dir", "publishtime": "event_time"}
+    )
+    wind_df.dropna(inplace=True)
+    return wind_df
+
+
+def get_aqi_df(base_df: pd.DataFrame) -> pd.DataFrame:
+    aqi_table_cols = ["sitename", "county", "aqi", "publishtime"]
+    df = base_df[aqi_table_cols]
+    aqi_df = df.rename(columns={"sitename": "site", "publishtime": "event_time"})
+    aqi_df["aqi"] = aqi_df["aqi"].replace(to_replace="", value=np.nan)
+    return aqi_df
+
+
+def get_air_df(base_df: pd.DataFrame) -> pd.DataFrame:
+    air_table_cols = [
+        "sitename",
+        "county",
+        "o3",
+        "co",
+        "so2",
+        "no",
+        "no2",
+        "nox",
+        "pollutant",
+        "publishtime",
+    ]
+    df = base_df[air_table_cols]
+    air_df = df.rename(columns={"sitename": "site", "publishtime": "event_time"})
+    air_df.dropna(inplace=True)
+    return air_df
+
+
+def get_air_avg_df(base_df: pd.DataFrame) -> pd.DataFrame:
+    air_avg_table_cols = [
+        "sitename",
+        "county",
+        "o3_8hr",
+        "co_8hr",
+        "pm25_avg",
+        "pm10_avg",
+        "so2_avg",
+        "publishtime",
+    ]
+
+    df = base_df[air_avg_table_cols]
+    air_avg_df = df.rename(columns={"sitename": "site", "publishtime": "event_time"})
+    air_avg_df.dropna(inplace=True)
+    return air_avg_df
