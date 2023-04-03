@@ -132,34 +132,14 @@ def silver_aqi_multi_asset(_context: OpExecutionContext, bronze_aqi_asset):
 
 
 async def coro_get_dfs(base_df: pd.DataFrame):
-    task_get_wind_df = coro_get_wind_df(base_df)
-    task_get_aqi_df = coro_get_aqi_df(base_df)
-    task_get_air_df = coro_get_air_df(base_df)
-    task_get_air_avg_df = coro_get_air_avg_df(base_df)
+    task_get_wind_df = asyncio.to_thread(get_wind_df, base_df)
+    task_get_aqi_df = asyncio.to_thread(get_aqi_df, base_df)
+    task_get_air_df = asyncio.to_thread(get_air_df, base_df)
+    task_get_air_avg_df = asyncio.to_thread(get_air_avg_df, base_df)
     dfs = await asyncio.gather(
         task_get_wind_df, task_get_aqi_df, task_get_air_df, task_get_air_avg_df
     )
     return dfs
-
-
-async def coro_get_wind_df(base_df: pd.DataFrame) -> pd.DataFrame:
-    df = await asyncio.to_thread(get_wind_df, base_df)
-    return df
-
-
-async def coro_get_aqi_df(base_df: pd.DataFrame) -> pd.DataFrame:
-    df = await asyncio.to_thread(get_aqi_df, base_df)
-    return df
-
-
-async def coro_get_air_df(base_df: pd.DataFrame) -> pd.DataFrame:
-    df = await asyncio.to_thread(get_air_df, base_df)
-    return df
-
-
-async def coro_get_air_avg_df(base_df: pd.DataFrame) -> pd.DataFrame:
-    df = await asyncio.to_thread(get_air_avg_df, base_df)
-    return df
 
 
 def get_wind_df(base_df: pd.DataFrame) -> pd.DataFrame:
