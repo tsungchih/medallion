@@ -15,7 +15,8 @@ _dagster_k8s_tags = {
                 "requests": {"cpu": "250m", "memory": "256Mi"},
                 "limits": {"cpu": "1000m", "memory": "1024Mi"},
             },
-        }
+        },
+        "job_spec_config": {"ttl_seconds_after_finished": 180},
     }
 }
 
