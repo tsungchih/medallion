@@ -1,7 +1,6 @@
-import os
-
-from dagster import Config, StringSource
 from pydantic import Field
+
+from dagster import Config
 
 
 class ApiConfig(Config):

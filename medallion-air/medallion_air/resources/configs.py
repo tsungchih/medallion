@@ -1,9 +1,6 @@
 from datetime import datetime
 
-import pendulum
-
 from dagster import (
-    Config,
     DagsterRunStatus,
     EnvVar,
     Field,
@@ -13,11 +10,8 @@ from dagster import (
     StringSource,
     hourly_partitioned_config,
 )
+from medallion_air.assets.bronze.config import ApiConfig
 from medallion_air.assets.partitions import hourly_partitions_def
-
-
-class AirAPIOpConfig(Config):
-    api_uri: str
 
 
 def job_retention_resource_config_schema():
@@ -56,9 +50,9 @@ def define_job_clean_config_schema():
 )
 def partitioned_all_air_assets_job_config(start: datetime, _end: datetime):
     op_config = {
-        "bronze_aqi_asset": AirAPIOpConfig(api_uri=EnvVar("MEDALLION_AIR_AQI_URI")),
-        "bronze_pm10_asset": AirAPIOpConfig(api_uri=EnvVar("MEDALLION_AIR_PM10_URI")),
-        "bronze_pm25_asset": AirAPIOpConfig(api_uri=EnvVar("MEDALLION_AIR_PM25_URI")),
+        "bronze_aqi_asset": ApiConfig(api_uri=EnvVar("MEDALLION_AIR_AQI_URI")),
+        "bronze_pm10_asset": ApiConfig(api_uri=EnvVar("MEDALLION_AIR_PM10_URI")),
+        "bronze_pm25_asset": ApiConfig(api_uri=EnvVar("MEDALLION_AIR_PM25_URI")),
     }
 
     return RunConfig(ops=op_config).to_config_dict()
