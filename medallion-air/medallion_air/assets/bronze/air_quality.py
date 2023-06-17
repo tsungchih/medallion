@@ -2,8 +2,8 @@ import os
 
 import pandas as pd
 import requests
-from dagster import Field, MetadataValue, OpExecutionContext, Output, asset
 
+from dagster import Field, MetadataValue, OpExecutionContext, Output, asset
 from medallion_air.assets.partitions import hourly_partitions_def
 from medallion_air.schemas.air_quality_tables import AirQualityTableBase
 from medallion_air.schemas.factory import AirQualityTableFactory
@@ -30,7 +30,7 @@ table_factory: AirQualityTableFactory = AirQualityTableFactory()
         "layer": "bronze",
         "frequency": "per hour",
     },
-    io_manager_key="parquet_io_manager",
+    io_manager_key="gcs_io_manager",
     partitions_def=hourly_partitions_def,
 )
 def bronze_pm25_asset(_context: OpExecutionContext, config: ApiConfig) -> Output[pd.DataFrame]:
@@ -55,7 +55,7 @@ def bronze_pm25_asset(_context: OpExecutionContext, config: ApiConfig) -> Output
         "layer": "bronze",
         "frequency": "per hour",
     },
-    io_manager_key="parquet_io_manager",
+    io_manager_key="gcs_io_manager",
     partitions_def=hourly_partitions_def,
 )
 def bronze_pm10_asset(_context: OpExecutionContext, config: ApiConfig) -> Output[pd.DataFrame]:
@@ -79,7 +79,7 @@ def bronze_pm10_asset(_context: OpExecutionContext, config: ApiConfig) -> Output
         "layer": "bronze",
         "frequency": "per hour",
     },
-    io_manager_key="parquet_io_manager",
+    io_manager_key="gcs_io_manager",
     partitions_def=hourly_partitions_def,
 )
 def bronze_aqi_asset(_context: OpExecutionContext, config: ApiConfig) -> Output[pd.DataFrame]:

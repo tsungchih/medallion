@@ -3,6 +3,7 @@ import time
 
 import numpy as np
 import pandas as pd
+
 from dagster import (
     AssetOut,
     MetadataValue,
@@ -11,7 +12,6 @@ from dagster import (
     asset,
     multi_asset,
 )
-
 from medallion_air.assets.partitions import hourly_partitions_def
 from medallion_air.typing import (
     SilverAirAvgTableSchemaType,
@@ -35,7 +35,7 @@ from medallion_air.typing import (
         "frequency": "per hour",
     },
     partitions_def=hourly_partitions_def,
-    io_manager_key="parquet_io_manager",
+    io_manager_key="gcs_io_manager",
 )
 def silver_pm25_asset(_context: OpExecutionContext, bronze_pm25_asset) -> Output[pd.DataFrame]:
     """This asset conforms to the raw data retrieved PM2.5 information."""
@@ -60,7 +60,7 @@ def silver_pm25_asset(_context: OpExecutionContext, bronze_pm25_asset) -> Output
         "frequency": "per hour",
     },
     partitions_def=hourly_partitions_def,
-    io_manager_key="parquet_io_manager",
+    io_manager_key="gcs_io_manager",
 )
 def silver_pm10_asset(_context: OpExecutionContext, bronze_pm10_asset) -> Output[pd.DataFrame]:
     """This asset conforms to the raw data retrieved PM10 information."""
@@ -83,22 +83,22 @@ def silver_pm10_asset(_context: OpExecutionContext, bronze_pm10_asset) -> Output
     outs={
         "silver_wind_asset": AssetOut(
             dagster_type=SilverWindTableSchemaType,
-            io_manager_key="parquet_io_manager",
+            io_manager_key="gcs_io_manager",
             description="This asset describes the wind condition.",
         ),
         "silver_aqi_asset": AssetOut(
             dagster_type=SilverAqiTableSchemaType,
-            io_manager_key="parquet_io_manager",
+            io_manager_key="gcs_io_manager",
             description="This asset describes the AQI condition for each site.",
         ),
         "silver_air_asset": AssetOut(
             dagster_type=SilverAirTableSchemaType,
-            io_manager_key="parquet_io_manager",
+            io_manager_key="gcs_io_manager",
             description="This asset describes the air condition for each site.",
         ),
         "silver_air_avg_asset": AssetOut(
             dagster_type=SilverAirAvgTableSchemaType,
-            io_manager_key="parquet_io_manager",
+            io_manager_key="gcs_io_manager",
             description="This asset describes the air condition in average for each site.",
         ),
     },
