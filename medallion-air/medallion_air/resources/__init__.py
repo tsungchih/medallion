@@ -1,4 +1,5 @@
 from dagster_gcp.gcs import ConfigurablePickledObjectGCSIOManager, GCSResource
+from dagster_gcp_pandas import BigQueryPandasIOManager
 
 from dagster import EnvVar
 
@@ -12,6 +13,7 @@ RESOURCES_DEV = {
         project_id=EnvVar("GOOGLE_CLOUD_PROJECT"),
         credentials=EnvVar("GOOGLE_APPLICATION_CREDENTIALS"),
     ),
+    "bq_io_manager": BigQueryPandasIOManager.configure_at_launch(),
 }
 
 RESOURCES_PROD = {

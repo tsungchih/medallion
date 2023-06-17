@@ -1,6 +1,6 @@
-from dagster import MetadataValue, OpExecutionContext, Output, asset
 from pandas import DataFrame
 
+from dagster import MetadataValue, OpExecutionContext, Output, asset
 from medallion_air.assets.partitions import hourly_partitions_def
 from medallion_air.typing import GoldAirWithAvgSchemaType, GoldAqiWithPmSchemaType
 
@@ -8,7 +8,8 @@ from medallion_air.typing import GoldAirWithAvgSchemaType, GoldAqiWithPmSchemaTy
 @asset(
     compute_kind="python",
     dagster_type=GoldAqiWithPmSchemaType,
-    io_manager_key="gcs_io_manager",
+    key_prefix=["test_pub_dataset"],
+    io_manager_key="bq_io_manager",
     metadata={
         "org": "Home",
         "team": "Data Innovation",
@@ -16,6 +17,7 @@ from medallion_air.typing import GoldAirWithAvgSchemaType, GoldAqiWithPmSchemaTy
         "contact": MetadataValue.url(url="mailto:tsungchih.hd@gmail.com"),
         "layer": "gold",
         "frequency": "per hour",
+        "partition_expr": "EVENT_TIME",
     },
     partitions_def=hourly_partitions_def,
 )
@@ -25,8 +27,11 @@ def gold_aqi_with_pm_asset(
     """This asset describes AQI, PM10, and PM2.5 conditions for each site."""
     idx = ("site", "county")
 
-    df: DataFrame = silver_pm25_asset.merge(silver_pm10_asset, on=idx).merge(
-        silver_aqi_asset, on=idx
+    df: DataFrame = (
+        silver_pm25_asset.merge(silver_pm10_asset, on=idx)
+        .merge(silver_aqi_asset, on=idx)
+        .drop(labels=["event_time_x"], axis=1)
+        .drop(labels=["event_time_y"], axis=1)
     )
 
     return Output(value=df, metadata={"row_count": df.shape[0], "col_count": df.shape[1]})
@@ -35,7 +40,8 @@ def gold_aqi_with_pm_asset(
 @asset(
     compute_kind="python",
     dagster_type=GoldAirWithAvgSchemaType,
-    io_manager_key="gcs_io_manager",
+    key_prefix=["test_pub_dataset"],
+    io_manager_key="bq_io_manager",
     metadata={
         "org": "Home",
         "team": "Data Innovation",
@@ -43,6 +49,7 @@ def gold_aqi_with_pm_asset(
         "contact": MetadataValue.url(url="mailto:tsungchih.hd@gmail.com"),
         "layer": "gold",
         "frequency": "per hour",
+        "partition_expr": "event_time",
     },
     partitions_def=hourly_partitions_def,
 )

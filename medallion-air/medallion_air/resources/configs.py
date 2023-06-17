@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from dagster_gcp_pandas import BigQueryPandasIOManager
+
 from dagster import (
     DagsterRunStatus,
     EnvVar,
@@ -49,10 +51,17 @@ def define_job_clean_config_schema():
     timezone="Asia/Taipei",
 )
 def partitioned_all_air_assets_job_config(start: datetime, _end: datetime):
-    op_config = {
+    resources_config = {
+        "bq_io_manager": BigQueryPandasIOManager(
+            project=EnvVar("GOOGLE_CLOUD_PROJECT"),
+            location="us-west1",
+            timeout=10.0,
+        )
+    }
+    ops_config = {
         "bronze_aqi_asset": ApiConfig(api_uri=EnvVar("MEDALLION_AIR_AQI_URI")),
         "bronze_pm10_asset": ApiConfig(api_uri=EnvVar("MEDALLION_AIR_PM10_URI")),
         "bronze_pm25_asset": ApiConfig(api_uri=EnvVar("MEDALLION_AIR_PM25_URI")),
     }
 
-    return RunConfig(ops=op_config).to_config_dict()
+    return RunConfig(ops=ops_config, resources=resources_config).to_config_dict()
