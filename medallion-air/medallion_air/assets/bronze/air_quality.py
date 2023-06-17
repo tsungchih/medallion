@@ -1,9 +1,7 @@
-import os
-
 import pandas as pd
 import requests
 
-from dagster import Field, MetadataValue, OpExecutionContext, Output, asset
+from dagster import MetadataValue, OpExecutionContext, Output, asset
 from medallion_air.assets.partitions import hourly_partitions_def
 from medallion_air.schemas.air_quality_tables import AirQualityTableBase
 from medallion_air.schemas.factory import AirQualityTableFactory
