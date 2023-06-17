@@ -4,8 +4,6 @@ from dagster import (
     define_asset_job,
     multi_or_in_process_executor,
 )
-from dagster_dask import dask_executor
-
 from medallion_air.assets.partitions import hourly_partitions_def
 from medallion_air.jobs import JOB_RETRY_TAGS
 from medallion_air.resources.configs import partitioned_all_air_assets_job_config

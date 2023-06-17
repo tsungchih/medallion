@@ -1,5 +1,8 @@
+import pendulum
+
 from dagster import HourlyPartitionsDefinition
 
 hourly_partitions_def = HourlyPartitionsDefinition(
-    start_date="2023-03-01-00:00", timezone="Asia/Taipei"
+    start_date=pendulum.now().subtract(months=1).format(fmt="YYYY-MM-DD-00:00"),
+    timezone="Asia/Taipei",
 )
