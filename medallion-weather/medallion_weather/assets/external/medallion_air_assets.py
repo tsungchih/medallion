@@ -1,8 +1,6 @@
-from dagster import AssetKey, HourlyPartitionsDefinition, SourceAsset
+from dagster import AssetKey, SourceAsset
 
-hourly_partitions_def = HourlyPartitionsDefinition(
-    start_date="2022-11-19-00:00", timezone="Asia/Taipei"
-)
+from medallion_weather.assets.partitions import hourly_partitions_def
 
 medallion_air_aqi_with_pm_asset = SourceAsset(
     key=AssetKey(["GCP", "gold_aqi_with_pm_asset"]),
