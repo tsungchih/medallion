@@ -1,16 +1,13 @@
 from dagster import (
     AssetKey,
     DefaultSensorStatus,
-    EnvVar,
     EventLogEntry,
-    RunConfig,
     RunRequest,
     SensorEvaluationContext,
     asset_sensor,
 )
-from dagster_gcp_pandas import BigQueryPandasIOManager
 
-from ..jobs import DAGSTER_K8S_CONFIG_TAGS, all_assets_job
+from ..jobs import all_assets_job
 from ..resources.configs import define_all_assets_job_run_config
 
 
@@ -29,7 +26,6 @@ def from_air_gold_aqi_with_pm_asset(_context: SensorEvaluationContext, asset_eve
         run_key=run_key,
         partition_key=asset_event.dagster_event.partition,
         run_config=run_config,
-        tags=DAGSTER_K8S_CONFIG_TAGS,
     )
     _context.update_cursor(run_key)
     yield run_req
