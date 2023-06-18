@@ -1,49 +1,48 @@
 from datetime import datetime
+from typing import Optional
 
 from dagster_gcp_pandas import BigQueryPandasIOManager
+from pydantic import Field
 
-from dagster import (
-    DagsterRunStatus,
-    EnvVar,
-    Field,
-    IntSource,
-    Noneable,
-    RunConfig,
-    StringSource,
-    hourly_partitioned_config,
-)
+from dagster import Config, EnvVar, RunConfig, hourly_partitioned_config
 from medallion_air.assets.bronze.config import ApiConfig
 from medallion_air.assets.partitions import hourly_partitions_def
 
 
-def job_retention_resource_config_schema():
-    days = Field(
-        Noneable(IntSource),
-        default_value=-1,
-        description="""How many days job runs with a given status can be removed. A value of"""
-        """-1 indicates that job runs with a given status should be retained indefinitely.""",
+class PurgeAfterDaysResourceConfig(Config):
+    success: Optional[int] = Field(
+        default=-1,
+        description=(
+            "How many days job runs with a given status can be removed. A value of"
+            "-1 indicates that job runs with a given status should be retained indefinitely."
+        ),
+        ge=-1,
+    )
+    failure: Optional[int] = Field(
+        default=-1,
+        description=(
+            "How many days job runs with a given status can be removed. A value of"
+            "-1 indicates that job runs with a given status should be retained indefinitely."
+        ),
+        ge=-1,
+    )
+    canceled: Optional[int] = Field(
+        default=-1,
+        description=(
+            "How many days job runs with a given status can be removed. A value of"
+            "-1 indicates that job runs with a given status should be retained indefinitely."
+        ),
+        ge=-1,
     )
 
-    return {
-        "retention": {
-            "purge_after_days": {
-                DagsterRunStatus.SUCCESS.value.lower(): days,
-                DagsterRunStatus.FAILURE.value.lower(): days,
-                DagsterRunStatus.CANCELED.value.lower(): days,
-            }
-        }
-    }
+
+class RetentionResourceConfig(Config):
+    purge_after_days: PurgeAfterDaysResourceConfig
 
 
-def define_job_clean_config_schema():
-    job_name = Field(
-        StringSource, description="The job name to be filtered and cleaned.", is_required=True
-    )
-    config_schema = {
-        "job_name": job_name,
-        **job_retention_resource_config_schema(),
-    }
-    return config_schema
+class JobCleanOpConfig(Config):
+    job_name: str = Field(default=..., description="The job name to be filtered and cleaned.")
+    retention: RetentionResourceConfig
 
 
 @hourly_partitioned_config(

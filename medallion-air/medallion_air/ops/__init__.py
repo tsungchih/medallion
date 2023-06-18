@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Sequence
 
 import dagster._check as check
+
 from dagster import (
     DagsterInstance,
     DagsterRun,
@@ -12,7 +13,7 @@ from dagster import (
     op,
 )
 
-from ..resources.configs import define_job_clean_config_schema
+from ..resources.configs import JobCleanOpConfig
 
 
 def get_op_filter_job_runs_with_status(status: DagsterRunStatus, job_name: Optional[str] = None):
@@ -39,20 +40,16 @@ def get_op_filter_job_runs_with_status(status: DagsterRunStatus, job_name: Optio
     return filter_job_runs_with_status
 
 
-@op(config_schema=define_job_clean_config_schema())
-def get_concerned_job_runs(context: OpExecutionContext):
+@op
+def get_concerned_job_runs(context: OpExecutionContext, config: JobCleanOpConfig):
     """This op filtered out the list of specified status of the given job.
 
     Args:
         context (OpExecutionContext): The Op execution context.
     """
-    job_name = context.op_config.get("job_name") or "*"
-    retention_info = context.op_config["retention"]
-    purge_after_days = retention_info["purge_after_days"]
-    check.str_param(job_name, "job_name")
-    check.dict_param(
-        obj=purge_after_days, param_name="purge_after_days", key_type=str, value_type=int
-    )
+    job_name = config.job_name or "*"
+    retention_info = config.retention
+    purge_after_days = retention_info.purge_after_days.dict()
     dagster_instance: DagsterInstance = context.instance
     concerned_status: List[str] = [
         status_value for status_value in purge_after_days if purge_after_days[status_value] >= 0
