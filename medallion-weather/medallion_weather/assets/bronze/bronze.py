@@ -1,11 +1,10 @@
-import os
-
 import requests
-from dagster import Field, MetadataValue, OpExecutionContext, Output, asset
+from dagster import MetadataValue, OpExecutionContext, Output, asset
 from pandas import DataFrame
 
 from medallion_weather.assets import BRONZE_GROUP_NAME
 from medallion_weather.assets.external import medallion_air_assets
+from medallion_weather.resources.configs import ApiOpsConfig
 from medallion_weather.schemas.factory import WeatherTableFactory
 from medallion_weather.schemas.weather_tables import BronzeWeatherTableBase
 from medallion_weather.typing import (
@@ -27,23 +26,15 @@ _bronze_asset_metadata = {
 @asset(
     compute_kind="python",
     dagster_type=BronzeWeatherSchemaType,
-    config_schema={
-        "api": Field(
-            str,
-            default_value=os.environ.get("MEDALLION_WEATHER_WEATHER_URI", ""),
-            description="The API uri for retrieving JSON format raw data.",
-            is_required=False,
-        )
-    },
     metadata=_bronze_asset_metadata,
     partitions_def=medallion_air_assets.hourly_partitions_def,
 )
-def bronze_weather_asset(context: OpExecutionContext) -> Output[DataFrame]:
+def bronze_weather_asset(context: OpExecutionContext, config: ApiOpsConfig) -> Output[DataFrame]:
     """This asset holds the weather information retrieved from the given weather API."""
 
     partition_key_str = context.asset_partition_key_for_output()
     context.log.info(f"The partition key for bronze_weather_asset: {partition_key_str}.")
-    api_uri = context.op_config["api"]
+    api_uri = config.api_uri
     try:
         raw_contents = requests.get(api_uri).text
     except requests.URLRequired as e:
@@ -59,21 +50,15 @@ def bronze_weather_asset(context: OpExecutionContext) -> Output[DataFrame]:
 @asset(
     compute_kind="python",
     dagster_type=BronzeRainConditionSchemaType,
-    config_schema={
-        "api": Field(
-            str,
-            default_value=os.environ.get("MEDALLION_WEATHER_RAIN_URI", ""),
-            description="The API uri for retrieving JSON format raw data.",
-            is_required=False,
-        )
-    },
     metadata=_bronze_asset_metadata,
     partitions_def=medallion_air_assets.hourly_partitions_def,
 )
-def bronze_rain_condition_asset(context: OpExecutionContext) -> Output[DataFrame]:
+def bronze_rain_condition_asset(
+    context: OpExecutionContext, config: ApiOpsConfig
+) -> Output[DataFrame]:
     """This asset holds the rain condition information retrieved from the given API."""
 
-    api_uri = context.op_config["api"]
+    api_uri = config.api_uri
     try:
         raw_contents = requests.get(api_uri).text
     except requests.URLRequired as e:
