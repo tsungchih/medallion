@@ -25,6 +25,6 @@ all_assets_job = define_asset_job(
     config=define_all_assets_job_run_config(),
     selection=AssetSelection.groups(*ALL_ASSET_GROUPS),
     description="This job tries to materialize all asset groups.",
-    tags={**DAGSTER_K8S_CONFIG_TAGS, **DAGSTER_JOB_RETRY_TAGS},
+    tags={**DAGSTER_K8S_CONFIG_TAGS},
     partitions_def=hourly_partitions_def,
 )
