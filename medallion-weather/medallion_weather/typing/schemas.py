@@ -80,7 +80,7 @@ class GoldWeatherSchema(pa.SchemaModel):
         nullable=True,
     )
     rain: Series[pa.Float32] = pa.Field(description="The value of temperature.")
-    event_time: Series[pd.Timestamp] = pa.Field(description="The event time.")
-    # event_time: Series[pd.DatetimeTZDtype] = pa.Field(
-    #     description="The event time.", dtype_kwargs={"tz": "Asia/Taipei"}
-    # )
+    # event_time: Series[pd.Timestamp] = pa.Field(description="The event time.")
+    event_time: Series[pd.DatetimeTZDtype] = pa.Field(
+        description="The event time.", dtype_kwargs={"tz": "Asia/Taipei"}
+    )

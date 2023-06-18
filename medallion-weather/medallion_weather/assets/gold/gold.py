@@ -33,17 +33,15 @@ def gold_weather_asset(
 ) -> Output[pd.DataFrame]:
     """This asset joined weather and rain condition information originated from the silver layer."""
 
-    weather_df = gold_aqi_with_pm_asset.drop(labels=["event_time", "event_time_y"], axis=1)
+    weather_df = gold_aqi_with_pm_asset.drop(labels=["event_time"], axis=1)
     silver_weather_df = silver_weather_asset.drop(labels=["event_time"], axis=1)
-    silver_rain_condition_df = silver_rain_condition_asset.drop(labels=["event_time"], axis=1)
 
     df: pd.DataFrame = silver_weather_df.merge(
-        silver_rain_condition_df, on=["county", "site"], how="inner"
+        silver_rain_condition_asset, on=["county", "site"], how="inner"
     ).merge(weather_df, on=["county", "site"], how="left")
-    df = df.rename(columns={"event_time_x": "event_time"})
-    # df = df.fillna(value={"event_time": df.event_time.mode()})
+    context.log.info(df.head())
     df["event_time"] = df["event_time"].replace(to_replace=[None], value=df.event_time.mode())
-    # df = df.drop(labels=["event_time_y"], axis=1)
+
     row_count, col_count = df.shape
     metadata = {
         "row_count": row_count,
