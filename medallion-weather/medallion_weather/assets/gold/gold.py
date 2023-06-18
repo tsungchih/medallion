@@ -18,7 +18,11 @@ _gold_asset_metadata = {
     compute_kind="python",
     dagster_type=GoldWeatherSchemaType,
     metadata=_gold_asset_metadata,
-    ins={"gold_aqi_with_pm_asset": AssetIn(key=AssetKey(["GCP", "gold_aqi_with_pm_asset"]))},
+    ins={
+        "gold_aqi_with_pm_asset": AssetIn(
+            key=AssetKey(["GCP", "test_pub_dataset", "gold_aqi_with_pm_asset"])
+        )
+    },
     partitions_def=hourly_partitions_def,
 )
 def gold_weather_asset(
