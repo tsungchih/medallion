@@ -1,23 +1,29 @@
-from dataclasses import dataclass, field
 from typing import List, Optional
 
 import google.auth
-from dagster import InitResourceContext, StringSource, resource
+from dagster import ConfigurableResource
 from google.cloud import storage
 from google.cloud.storage.bucket import Blob, Bucket
 
 
-@dataclass(frozen=True)
-class GCSClient(object):
-    """This class is aimed at creating a GCS client object using Google Cloud Storage API."""
+class GCSClient(ConfigurableResource):
+    """A resource that provides a client for interacting with Google Cloud Storage.
+
+    Args:
+        project_id (str): The project ID of the GCP project.
+        credentials (Optional[str]): The path to the credentials file.
+    """
 
     project_id: str
-    credentials: str
-    _client: storage.Client = field(init=False)
+    credentials: Optional[str] = None
 
-    def __post_init__(self):
-        creds, _ = google.auth.load_credentials_from_file(filename=self.credentials)
-        self._client = storage.Client(project=self.project_id, credentials=creds)
+    def _init_client(self) -> storage.Client:
+        creds, _ = (
+            google.auth.load_credentials_from_file(filename=self.credentials)
+            if self.credentials
+            else (None, None)
+        )
+        return storage.Client(project=self.project_id, credentials=creds)
 
     def download_blob_as_bytes(self, bucket_name: str, blob_name: str) -> bytes:
         """Download and return the given blob as bytes.
@@ -32,9 +38,10 @@ class GCSClient(object):
         Returns:
             bytes: The blob contents with bytes.
         """
-        bucket: Bucket = self._client.bucket(bucket_name)
+        client = self._init_client()
+        bucket: Bucket = client.bucket(bucket_name)
         blob: Blob = bucket.blob(blob_name)
-        res = blob.download_as_bytes(self._client)
+        res = blob.download_as_bytes(client)
 
         return res
 
@@ -64,7 +71,7 @@ class GCSClient(object):
         prefix: Optional[str] = None,
         max_results: Optional[int] = None,
         start_offset: Optional[str] = None,
-    ) -> List[Blob]:
+    ) -> List[str]:
         """Returns a list of blob names.
 
         Args:
@@ -83,22 +90,12 @@ class GCSClient(object):
         Returns:
             List[str]: _description_
         """
-        blob_list = self._client.list_blobs(
+        client = self._init_client()
+        blob_list = client.list_blobs(
             bucket_or_name=bucket_name,
             prefix=prefix,
             max_results=max_results,
             start_offset=start_offset,
         )
-        blob_names = [blob for blob in blob_list if blob.name.split("/")[-1]]
+        blob_names = [blob.name for blob in blob_list if blob.name.split("/")[-1]]
         return blob_names
-
-
-@resource(
-    config_schema={"project_id": StringSource, "credentials": StringSource},
-    description="The GCS client resource.",
-)
-def gcs_client(context: InitResourceContext) -> GCSClient:
-    project_id = context.resource_config["project_id"]
-    credentials = context.resource_config["credentials"]
-
-    return GCSClient(project_id, credentials)

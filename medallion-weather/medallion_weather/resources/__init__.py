@@ -1,30 +1,26 @@
-from dagster_gcp.gcs import gcs_pickle_io_manager, gcs_resource
+from dagster import EnvVar
+from dagster_gcp.gcs.io_manager import (
+    ConfigurablePickledObjectGCSIOManager,
+    GCSResource,
+)
 
-from .gcs_client import gcs_client
+from .gcs_client import GCSClient
 
 RESOURCES_DEV = {
-    "gcs_io_manager": gcs_pickle_io_manager.configured(
-        {
-            "gcs_bucket": "dagster-demo-iomanager",
-            "gcs_prefix": "dagster",
-        }
+    "gcs_io_manager": ConfigurablePickledObjectGCSIOManager(
+        gcs=GCSResource(), gcs_bucket="dagster-demo-iomanager", gcs_prefix="dagster"
     ),
-    "gcs": gcs_resource,
-    "gcs_client": gcs_client.configured(
-        {
-            "project_id": {"env": "GOOGLE_CLOUD_PROJECT"},
-            "credentials": {"env": "GOOGLE_APPLICATION_CREDENTIALS"},
-        }
+    "gcs_client": GCSClient(
+        project_id=EnvVar("GOOGLE_CLOUD_PROJECT"),
+        credentials=EnvVar("GOOGLE_APPLICATION_CREDENTIALS"),
     ),
 }
 
 RESOURCES_PROD = {
-    "gcs_client": gcs_client.configured(
-        {
-            "project_id": {"env": "GOOGLE_CLOUD_PROJECT"},
-            "credentials": {"env": "GOOGLE_APPLICATION_CREDENTIALS"},
-        }
-    )
+    "gcs_client": GCSClient(
+        project_id=EnvVar("GOOGLE_CLOUD_PROJECT"),
+        credentials=EnvVar("GOOGLE_APPLICATION_CREDENTIALS"),
+    ),
 }
 
 
