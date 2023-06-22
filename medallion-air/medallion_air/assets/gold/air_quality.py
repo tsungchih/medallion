@@ -1,3 +1,6 @@
+from datetime import datetime
+
+import pendulum
 from pandas import DataFrame
 
 from dagster import MetadataValue, OpExecutionContext, Output, asset
@@ -30,8 +33,16 @@ def gold_aqi_with_pm_asset(
     df: DataFrame = (
         silver_pm25_asset.merge(silver_pm10_asset, on=idx)
         .merge(silver_aqi_asset, on=idx)
-        .drop(labels=["event_time_x"], axis=1)
-        .drop(labels=["event_time_y"], axis=1)
+        .drop(labels=["event_time_x", "event_time_y"], axis=1)
+    )
+    df["event_time"] = df["event_time"].apply(
+        lambda x: datetime.fromtimestamp(
+            pendulum.from_format(
+                string=_context.partition_key, fmt="YYYY-MM-DD-HH:mm", tz="Asia/Taipei"
+            )
+            .add(minutes=30)
+            .timestamp()
+        )
     )
 
     return Output(value=df, metadata={"row_count": df.shape[0], "col_count": df.shape[1]})
@@ -64,6 +75,14 @@ def gold_air_with_avg_asset(
         .rename(columns={"event_time_x": "event_time"})
         .drop(labels=["event_time_y"], axis=1)
     )
-    _context.log.info(df.columns)
+    df["event_time"] = df["event_time"].apply(
+        lambda x: datetime.fromtimestamp(
+            pendulum.from_format(
+                string=_context.partition_key, fmt="YYYY-MM-DD-HH:mm", tz="Asia/Taipei"
+            )
+            .add(minutes=30)
+            .timestamp()
+        )
+    )
 
     return Output(value=df, metadata={"row_count": df.shape[0], "col_count": df.shape[1]})
