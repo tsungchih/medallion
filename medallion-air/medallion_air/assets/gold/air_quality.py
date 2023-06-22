@@ -36,12 +36,10 @@ def gold_aqi_with_pm_asset(
         .drop(labels=["event_time_x", "event_time_y"], axis=1)
     )
     df["event_time"] = df["event_time"].apply(
-        lambda x: datetime.fromtimestamp(
-            pendulum.from_format(
-                string=_context.partition_key, fmt="YYYY-MM-DD-HH:mm", tz="Asia/Taipei"
-            )
+        lambda x: datetime.fromisoformat(
+            pendulum.from_format(string=_context.partition_key, fmt="YYYY-MM-DD-HH:mm", tz="UTC")
             .add(minutes=30)
-            .timestamp()
+            .to_datetime_string()
         )
     )
 
@@ -76,12 +74,10 @@ def gold_air_with_avg_asset(
         .drop(labels=["event_time_y"], axis=1)
     )
     df["event_time"] = df["event_time"].apply(
-        lambda x: datetime.fromtimestamp(
-            pendulum.from_format(
-                string=_context.partition_key, fmt="YYYY-MM-DD-HH:mm", tz="Asia/Taipei"
-            )
+        lambda x: datetime.fromisoformat(
+            pendulum.from_format(string=_context.partition_key, fmt="YYYY-MM-DD-HH:mm", tz="UTC")
             .add(minutes=30)
-            .timestamp()
+            .to_datetime_string()
         )
     )
 
