@@ -55,6 +55,7 @@ help:
 cmd-exists-%:
 	@hash $(*) > /dev/null 2>&1 || \
 		(echo "Forget to run 'poetry shell'???\nERROR: '$(*)' must be installed and available on your PATH."; exit 1)
+
 ## Build Python package
 build-pkg:
 	@python -m build
@@ -64,7 +65,7 @@ docker-build: cmd-exists-docker
 	@docker build -t georgelai/$(PROJ_NAME):$(PROJ_VERSION) -f docker/Dockerfile .
 
 ## Start a local deployment of Dagster, including Dagit and the dagster-daemon
-run-dagster-dev:cmd-exists-dagster
+run-dagster-dev: cmd-exists-dagster
 	@DAGSTER_HOME=$(DAGSTER_HOME) \
      LOCAL_ARTIFACT_STORAGE_BASE_DIR=$(LOCAL_ARTIFACT_STORAGE_BASE_DIR) \
      SQLITE_RUN_STORAGE_BASE_DIR=$(SQLITE_RUN_STORAGE_BASE_DIR) \
