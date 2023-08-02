@@ -1,16 +1,23 @@
 ####################################################################################################
-# Dagit: Configuration for the Dagit webserver
+# Dagster Webserver: Configuration for the Dagster webserver
 ####################################################################################################
-dagit:
+dagsterWebserver:
   replicaCount: 1
   image:
+    # When a tag is not supplied for a Dagster provided image,
+    # it will default as the Helm chart version.
     repository: "docker.io/dagster/dagster-celery-k8s"
-    tag: "1.3.10"
+    tag: "1.4.3"
     pullPolicy: "IfNotPresent"
   workspace:
     enabled: true
-    servers: []
-    externalConfigmap: "dagster-workspace"
+    servers:
+      - host: "medallion-air"
+        port: 4266
+        name: "medallion-air-data-product"
+      - host: "medallion-weather"
+        port: 4266
+        name: "medallion-weather-data-product"
   resources:
     requests:
       cpu: "100m"
@@ -18,16 +25,24 @@ dagit:
     limits:
       cpu: "750m"
       memory: "1Gi"
+  readinessProbe:
+    httpGet:
+      path: "/server_info"
+      port: 80
+    periodSeconds: 20
+    timeoutSeconds: 10
+    successThreshold: 1
+    failureThreshold: 3
 
 ####################################################################################################
 # User Code Deployments: Configuration for user code containers to be loaded via GRPC server. For
 # each item in the "deployments" list, a K8s Deployment and K8s Service will be created to run the
-# GRPC server that Dagit/Dagster communicates with to get repository information and the current
-# image information. These deployments can be updated independently of Dagit, and Dagit/Dagster
+# GRPC server that the Dagster webserver communicates with to get definitions information and the current
+# image information. These deployments can be updated independently of the Dagster webserver, and the webserver
 # will pull the current image for all execution. When using a distributed executor (such as
-# Celery-K8s) for pipeline run, the current image will be queried once and used for all
-# solid executions for that pipeline run. In order to guarantee that all solid executions within a
-# pipeline execution use the same image, we recommend using a unique tag (ie not "latest").
+# Celery-K8s) for job execution, the current image will be queried once and used for all
+# op executions for that run. In order to guarantee that all op executions within a job
+# execution use the same image, we recommend using a unique tag (ie not "latest").
 #
 # All user code will be invoked within the images.
 ####################################################################################################
@@ -48,7 +63,7 @@ pipelineRun:
     # When a tag is not supplied for a Dagster provided image,
     # it will default as the Helm chart version.
     repository: "docker.io/dagster/user-code-example"
-    tag: "1.3.10"
+    tag: "1.4.3"
     pullPolicy: "IfNotPresent"
 
 ####################################################################################################
@@ -65,18 +80,6 @@ runLauncher:
       # image pull policy to anything other than "Always" will use a cached/stale image, which is
       # almost certainly not what you want.
       imagePullPolicy: "IfNotPresent"
-
-      ## The image to use for the launched Job's Dagster container.
-      ## The `pullPolicy` field is ignored. Use`imagePullPolicy` instead.
-      # image:
-      #   repository: ""
-      #   tag: ""
-      #   pullPolicy: Always
-
-      # The K8s namespace where new jobs will be launched.
-      # By default, the release namespace is used.
-      jobNamespace: ~
-
       resources:
         limits:
           cpu: 100m
@@ -95,27 +98,20 @@ runLauncher:
 # database that is accessible from this chart.
 ####################################################################################################
 postgresql:
-  # set postgresql.enabled to be false to disable deploy of a PostgreSQL database and use an
-  # existing external PostgreSQL database
   enabled: true
-
-  # Used by init container to check that db is running. (Even if enabled:false)
   image:
-    repository: "postgres"
-    tag: "12.12"
+    repository: "library/postgres"
+    tag: "14.6"
     pullPolicy: "IfNotPresent"
-
-  # set this PostgreSQL hostname when using an external PostgreSQL database
   postgresqlHost: ""
-
   postgresqlUsername: dagster
-
-  # Note when changing this password (e.g. in test) that credentials will
-  # persist as long as the PVCs do -- see:
-  # https://github.com/helm/charts/issues/12836#issuecomment-524552358
   postgresqlPassword: dagster
-
   postgresqlDatabase: dagster
+  postgresqlScheme: "postgresql"
+  service:
+    port: 5432
+generatePostgresqlPasswordSecret: true
+generateCeleryConfigSecret: true
 
 ####################################################################################################
 # Dagster Daemon (Optional) Deploy a daemon for launching queued runs and running schedules and
@@ -135,10 +131,8 @@ dagsterDaemon:
   enabled: true
 
   image:
-    # When a tag is not supplied for a Dagster provided image,
-    # it will default as the Helm chart version.
     repository: "docker.io/dagster/dagster-celery-k8s"
-    tag: "1.3.10"
+    tag: "1.4.3"
     pullPolicy: "IfNotPresent"
   resources:
     requests:
@@ -147,6 +141,8 @@ dagsterDaemon:
     limits:
       cpu: "250m"
       memory: "500Mi"
+
+  heartbeatTolerance: 300
 
   runCoordinator:
     enabled: true
@@ -158,12 +154,12 @@ dagsterDaemon:
         dequeueIntervalSeconds: ~
         dequeueUseThreads: true
         dequeueNumWorkers: 4
-
   runMonitoring:
     enabled: true
     startTimeoutSeconds: 300
     pollIntervalSeconds: 120
     maxResumeRunAttempts: 1
+    freeSlotsAfterRunEndSeconds: 0
 
   runRetries:
     enabled: true
@@ -190,8 +186,14 @@ dagsterDaemon:
 telemetry:
   enabled: false
 
+####################################################################################################
+# Sets a data retention policy for data types such as schedule / sensor ticks.
+#
+# For more details, see:
+# https://docs.dagster.io/deployment/dagster-instance#data-retention
+####################################################################################################
 retention:
-  enabled: true
+  enabled: false
   schedule:
     purgeAfterDays: 1
   sensor:
