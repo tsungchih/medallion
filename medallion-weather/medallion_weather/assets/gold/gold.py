@@ -15,12 +15,13 @@ _gold_asset_metadata = {
 
 
 @asset(
-    compute_kind="python",
+    compute_kind="pandas",
     dagster_type=GoldWeatherSchemaType,
     metadata=_gold_asset_metadata,
     ins={
         "gold_aqi_with_pm_asset": AssetIn(
             key=AssetKey(["GCP", "test_pub_dataset", "gold_aqi_with_pm_asset"]),
+            input_manager_key="bq_io_manager",
         )
     },
     partitions_def=hourly_partitions_def,
@@ -32,7 +33,7 @@ def gold_weather_asset(
     gold_aqi_with_pm_asset,
 ) -> Output[pd.DataFrame]:
     """This asset joined weather and rain condition information originated from the silver layer."""
-
+    context.log.info(gold_aqi_with_pm_asset.head())
     weather_df = gold_aqi_with_pm_asset.drop(labels=["event_time"], axis=1)
     silver_weather_df = silver_weather_asset.drop(labels=["event_time"], axis=1)
 

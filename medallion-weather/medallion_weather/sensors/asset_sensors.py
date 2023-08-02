@@ -7,8 +7,8 @@ from dagster import (
     asset_sensor,
 )
 
-from ..jobs import all_assets_job
-from ..resources.configs import define_all_assets_job_run_config
+from medallion_weather.jobs import all_assets_job
+from medallion_weather.resources.configs import define_all_assets_job_run_config
 
 
 @asset_sensor(
