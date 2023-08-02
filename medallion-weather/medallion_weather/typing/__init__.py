@@ -84,7 +84,7 @@ BronzeWeatherSchemaType = create_dagster_pandas_dataframe_type(
             name="D_TNT", non_nullable=True, is_required=True, tz="Asia/Taipei"
         ),
     ],
-    event_metadata_fn=bronze_weather_summary_stats,
+    metadata_fn=bronze_weather_summary_stats,
 )
 
 BronzeRainConditionSchemaType = pandera_schema_to_dagster_type(BronzeRainConditionSchema)
