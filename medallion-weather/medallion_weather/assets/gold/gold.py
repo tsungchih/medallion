@@ -18,6 +18,7 @@ _gold_asset_metadata = {
     compute_kind="pandas",
     dagster_type=GoldWeatherSchemaType,
     metadata=_gold_asset_metadata,
+    io_manager_key="bq_io_manager",
     ins={
         "gold_aqi_with_pm_asset": AssetIn(
             key=AssetKey(["GCP", "test_pub_dataset", "gold_aqi_with_pm_asset"]),
@@ -40,7 +41,6 @@ def gold_weather_asset(
     df: pd.DataFrame = silver_weather_df.merge(
         silver_rain_condition_asset, on=["county", "site"], how="inner"
     ).merge(weather_df, on=["county", "site"], how="left")
-    context.log.info(df.head())
     df["event_time"] = df["event_time"].replace(to_replace=[None], value=df.event_time.mode())
 
     row_count, col_count = df.shape
