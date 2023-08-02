@@ -14,7 +14,7 @@ _silver_asset_metadata = {
 
 
 @asset(
-    compute_kind="python",
+    compute_kind="pandas",
     dagster_type=SilverWeatherSchemaType,
     metadata=_silver_asset_metadata,
     partitions_def=medallion_air_assets.hourly_partitions_def,
@@ -48,7 +48,7 @@ def silver_weather_asset(bronze_weather_asset) -> Output[pd.DataFrame]:
 
 
 @asset(
-    compute_kind="python",
+    compute_kind="pandas",
     dagster_type=SilverRainSchemaType,
     metadata=_silver_asset_metadata,
     partitions_def=medallion_air_assets.hourly_partitions_def,
