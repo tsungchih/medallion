@@ -36,7 +36,9 @@ def bronze_pm25_asset(_context: OpExecutionContext, config: ApiConfig) -> Output
 
     partition_key: str = _context.asset_partition_key_for_output()
     raw_contents = requests.get(url=config.api_uri).text
-    table: AirQualityTableBase = table_factory.create_object(AirQualityTableType.PM25, raw_contents)
+    table: AirQualityTableBase = table_factory.create_object(
+        AirQualityTableType.PM25, raw_contents.split("</pre>")[-1].strip()
+    )
     table.discover()
 
     return Output(value=table.df, metadata=table.metadata)
@@ -60,7 +62,9 @@ def bronze_pm10_asset(_context: OpExecutionContext, config: ApiConfig) -> Output
     """This asset conforms to the raw data retrieved PM10 information."""
 
     raw_contents = requests.get(url=config.api_uri).text
-    table: AirQualityTableBase = table_factory.create_object(AirQualityTableType.PM10, raw_contents)
+    table: AirQualityTableBase = table_factory.create_object(
+        AirQualityTableType.PM10, raw_contents.split("</pre>")[-1].strip()
+    )
     table.discover()
 
     return Output(value=table.df, metadata=table.metadata)
@@ -84,7 +88,9 @@ def bronze_aqi_asset(_context: OpExecutionContext, config: ApiConfig) -> Output[
     """This asset conforms to the raw data retrieved AQI information."""
 
     raw_contents = requests.get(url=config.api_uri).text
-    table: AirQualityTableBase = table_factory.create_object(AirQualityTableType.AQI, raw_contents)
+    table: AirQualityTableBase = table_factory.create_object(
+        AirQualityTableType.AQI, raw_contents.split("</pre>")[-1].strip()
+    )
     table.discover()
 
     return Output(value=table.df, metadata=table.metadata)

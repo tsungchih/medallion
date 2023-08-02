@@ -29,7 +29,7 @@ class BronzePm10TableSchema(SchemaModel):
     itemengname: Series[str] = Field(description="The English name of the item.")
     itemunit: Series[str] = Field(description="The unit of the item.")
     monitordate: Series[pd.Timestamp] = Field(description="The date when the item was monitored.")
-    concentration: Series[np.float32] = Field(ge=0, description="The value of PM10.")
+    concentration: Series[np.float32] = Field(ge=-1, description="The value of PM10.")
 
 
 class BronzeAqiTableSchema(SchemaModel):
