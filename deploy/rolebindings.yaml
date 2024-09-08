@@ -1,0 +1,32 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dagster-rolebinding-domain-air
+  namespace: air
+  labels:
+    app: dagster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dagster-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: sa-dagster
+  namespace: dagster
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dagster-rolebinding-domain-weather
+  namespace: weather
+  labels:
+    app: dagster
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dagster-cluster-role
+subjects:
+- kind: ServiceAccount
+  name: sa-dagster
+  namespace: dagster
