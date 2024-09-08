@@ -18,12 +18,16 @@ kubectl create ns dagster
 kubectl create ns air
 kubectl create ns weather
 
+kubectl create --filename=${PROJECT_DIR}/deploy/serviceaccount.yaml
+kubectl create --filename=${PROJECT_DIR}/deploy/clusterrole.yaml
+kubectl create --filename=${PROJECT_DIR}/deploy/rolebindings.yaml
+
 helm --namespace=dagster upgrade \
   dagster \
   dagster/dagster \
   --install \
   --version=${DAGSTER_CHART_VERSION} \
-  --values=${PROJECT_DIR}/deploy/dagster-values-${DAGSTER_CHART_VERSION}.yaml
+  --values=${PROJECT_DIR}/deploy/dagster-values-data-platform-${DAGSTER_CHART_VERSION}.yaml
 
 kubectl --namespace=air create secret generic medallion-air-secret-envs \
 	--from-literal=GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} \
