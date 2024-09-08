@@ -12,12 +12,12 @@ dagsterWebserver:
   workspace:
     enabled: true
     servers:
-      - host: "medallion-air"
+      - host: "medallion-air.air.svc"
         port: 4266
-        name: "medallion-air-data-product"
-      - host: "medallion-weather"
+        name: "domain-air"
+      - host: "medallion-weather.weather.svc"
         port: 4266
-        name: "medallion-weather-data-product"
+        name: "domain-weather"
   resources:
     requests:
       cpu: "100m"
