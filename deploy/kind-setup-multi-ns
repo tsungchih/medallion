@@ -1,0 +1,50 @@
+#!/bin/bash
+
+PROJECT_DIR=$(readlink -f $0 | xargs dirname | xargs dirname)
+MEDALLION_AIR_VERSION=${MEDALLION_AIR_VERSION:-0.1.3}
+MEDALLION_WEATHER_VERSION=${MEDALLION_WEATHER_VERSION:-0.1.3}
+DAGSTER_CHART_VERSION=${DAGSTER_CHART_VERSION:-1.4.3}
+
+kind delete clusters --all
+
+helm repo update
+
+kind create cluster --name=dev
+
+kind load docker-image --name=dev georgelai/medallion_air:${MEDALLION_AIR_VERSION}
+kind load docker-image --name=dev georgelai/medallion_weather:${MEDALLION_WEATHER_VERSION}
+
+kubectl create ns dagster
+kubectl create ns air
+kubectl create ns weather
+
+helm --namespace=dagster upgrade \
+  dagster \
+  dagster/dagster \
+  --install \
+  --version=${DAGSTER_CHART_VERSION} \
+  --values=${PROJECT_DIR}/deploy/dagster-values-${DAGSTER_CHART_VERSION}.yaml
+
+kubectl --namespace=air create secret generic medallion-air-secret-envs \
+	--from-literal=GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} \
+	--from-literal=GOOGLE_APPLICATION_CREDENTIALS=/root/application_default_credentials.json
+kubectl --namespace=air create secret generic medallion-air-gcp-creds \
+	--from-file=adc=${GOOGLE_APPLICATION_CREDENTIALS}
+helm --namespace=air upgrade \
+  dagster-user-deployments \
+  dagster/dagster-user-deployments \
+  --install \
+  --version=${DAGSTER_CHART_VERSION} \
+  --values=${PROJECT_DIR}/deploy/dagster-user-deployments-values-air-${DAGSTER_CHART_VERSION}.yaml
+
+kubectl --namespace=weather create secret generic medallion-weather-secret-envs \
+	--from-literal=GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT} \
+	--from-literal=GOOGLE_APPLICATION_CREDENTIALS=/root/application_default_credentials.json
+kubectl --namespace=weather create secret generic medallion-weather-gcp-creds \
+	--from-file=adc=${GOOGLE_APPLICATION_CREDENTIALS}
+helm --namespace=weather upgrade \
+  dagster-user-deployments \
+  dagster/dagster-user-deployments \
+  --install \
+  --version=${DAGSTER_CHART_VERSION} \
+  --values=${PROJECT_DIR}/deploy/dagster-user-deployments-values-weather-${DAGSTER_CHART_VERSION}.yaml
