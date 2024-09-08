@@ -1,0 +1,74 @@
+deployments:
+  - name: "medallion-air"
+    image:
+      repository: "georgelai/medallion_air"
+      tag: "0.1.3"
+      pullPolicy: "IfNotPresent"
+    dagsterApiGrpcArgs:
+      - "-m"
+      - "medallion_air"
+    port: 4266
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "500Mi"
+      limits:
+        cpu: "500m"
+        memory: "500Mi"
+    volumes:
+      - name: "gcp-creds-vol"
+        secret:
+          secretName: "medallion-air-gcp-creds"
+          items:
+            - key: "adc"
+              path: "application_default_credentials.json"
+          defaultMode: 0444
+    volumeMounts:
+      - name: "gcp-creds-vol"
+        mountPath: "/root"
+    env:
+      MEDALLION_AIR_ENV: "dev"
+      MEDALLION_AIR_PM25_URI: "https://data.moenv.gov.tw/api/v2/aqx_p_02?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json"
+      MEDALLION_AIR_PM10_URI: "https://data.moenv.gov.tw/api/v2/aqx_p_319?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json"
+      MEDALLION_AIR_AQI_URI: "https://data.moenv.gov.tw/api/v2/aqx_p_432?api_key=e8dd42e6-9b8b-43f8-991e-b3dee723a52d&limit=1000&sort=ImportDate%20desc&format=json"
+      MEDALLION_AIR_PURGE_CANCELED_JOBS_AFTER_DAYS: "-1"
+      MEDALLION_AIR_PURGE_FAILURE_JOBS_AFTER_DAYS: "1"
+      MEDALLION_AIR_PURGE_SUCCESS_JOBS_AFTER_DAYS: "1"
+      DASK_ADDRESS: "tcp://dask-scheduler:8786"
+
+    envSecrets:
+      - name: "medallion-air-secret-envs"
+  - name: "medallion-weather"
+    image:
+      repository: "georgelai/medallion_weather"
+      tag: "0.1.3"
+      pullPolicy: "IfNotPresent"
+    dagsterApiGrpcArgs:
+      - "-m"
+      - "medallion_weather"
+    port: 4266
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "500Mi"
+      limits:
+        cpu: "500m"
+        memory: "500Mi"
+    volumes:
+      - name: "gcp-creds-vol"
+        secret:
+          secretName: "medallion-weather-gcp-creds"
+          items:
+            - key: "adc"
+              path: "application_default_credentials.json"
+          defaultMode: 0444
+    volumeMounts:
+      - name: "gcp-creds-vol"
+        mountPath: "/root"
+    env:
+      MEDALLION_WEATHER_ENV: dev
+      MEDALLION_WEATHER_WEATHER_URI: https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=rdec-key-123-45678-011121314
+      MEDALLION_WEATHER_RAIN_URI: https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0002-001?Authorization=rdec-key-123-45678-011121314
+
+    envSecrets:
+      - name: "medallion-weather-secret-envs"
